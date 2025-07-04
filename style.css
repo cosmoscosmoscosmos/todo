@@ -7,6 +7,7 @@ body {
     min-height: 100vh; /* 최소 높이 설정 */
     background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); /* 파스텔 그라데이션 배경 */
     overflow: hidden; /* 스크롤바 숨김 */
+    padding-top: 30px; /* 상단 여백 추가 */
 }
 
 .color-palette {
