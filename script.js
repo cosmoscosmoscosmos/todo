@@ -2,11 +2,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskInput = document.getElementById('taskInput');
     const addButton = document.getElementById('addButton');
     const todoList = document.getElementById('todoList');
-    const taskCategory = document.getElementById('taskCategory'); // 새로 추가
-    const personalCountElement = document.getElementById('personalCount'); // 새로 추가
-    const businessCountElement = document.getElementById('businessCount'); // 새로 추가
-    const donePercentageElement = document.getElementById('donePercentage'); // 새로 추가
-    const colorButtons = document.querySelectorAll('.color-btn'); // 색상 버튼 선택
+    const taskCategory = document.getElementById('taskCategory');
+    const personalCountElement = document.getElementById('personalCount');
+    const businessCountElement = document.getElementById('businessCount');
+    const donePercentageElement = document.getElementById('donePercentage');
+    const filterCategory = document.getElementById('filterCategory'); // 필터 드롭다운 추가
 
     // Function to update task counters and done percentage
     function updateCounters() {
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const totalTasks = personalTotal + businessTotal;
-        const totalCompleted = personalCompleted + businessCompleted;
+        const totalCompleted = totalTasks > 0 ? personalCompleted + businessCompleted : 0;
         const donePercentage = totalTasks > 0 ? Math.floor((totalCompleted / totalTasks) * 100) : 0;
 
         personalCountElement.textContent = `${personalTotal} Personal`;
@@ -37,14 +37,27 @@ document.addEventListener('DOMContentLoaded', () => {
         donePercentageElement.textContent = `${donePercentage}% done`;
     }
 
+    // Function to filter tasks based on selected category
+    function filterTasks() {
+        const selectedCategory = filterCategory.value;
+        todoList.querySelectorAll('li').forEach(item => {
+            const category = item.dataset.category;
+            if (selectedCategory === 'All' || category === selectedCategory) {
+                item.style.display = 'flex'; // Show item
+            } else {
+                item.style.display = 'none'; // Hide item
+            }
+        });
+    }
+
     // Function to add a new task
     function addTask() {
         const taskText = taskInput.value.trim();
-        const category = taskCategory.value; // 선택된 카테고리 가져오기
+        const category = taskCategory.value;
 
         if (taskText !== '') {
             const listItem = document.createElement('li');
-            listItem.dataset.category = category; // 카테고리 데이터 속성 추가
+            listItem.dataset.category = category;
             listItem.innerHTML = `
                 <label class="checkbox-container">
                     <input type="checkbox">
@@ -55,27 +68,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="task-content">
                     <span class="task-title">${taskText}</span>
-                    <span class="task-description"></span> <!-- 설명 플레이스홀더 -->
+                    <span class="task-description"></span>
                 </div>
                 <div class="task-meta-actions">
-                    <span class="task-category">${category}</span> <!-- 카테고리 표시 -->
-                    <span class="task-time"></span> <!-- 시간 플레이스홀더 -->
+                    <span class="task-category">${category}</span>
+                    <span class="task-time"></span>
                     <button class="delete-btn">Delete</button>
                 </div>
             `;
             todoList.appendChild(listItem);
-            taskInput.value = ''; // Clear the input field
+            taskInput.value = '';
 
             // Add event listener to the checkbox
             const checkbox = listItem.querySelector('input[type="checkbox"]');
             checkbox.addEventListener('change', () => {
                 listItem.classList.toggle('completed');
                 if (checkbox.checked) {
-                    todoList.appendChild(listItem); // 체크 시 맨 아래로 이동
+                    todoList.appendChild(listItem);
                 } else {
-                    todoList.prepend(listItem); // 체크 해제 시 맨 위로 이동
+                    todoList.prepend(listItem);
                 }
-                updateCounters(); // 카운터 업데이트
+                updateCounters();
+                filterTasks(); // 필터링된 상태 유지
             });
 
             // Add event listener to the delete button
@@ -84,9 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (listItem.parentNode) {
                     listItem.parentNode.removeChild(listItem);
                 }
-                updateCounters(); // 카운터 업데이트
+                updateCounters();
+                filterTasks(); // 필터링된 상태 유지
             });
-            updateCounters(); // 새 할 일 추가 시 카운터 업데이트
+            updateCounters();
+            filterTasks(); // 새 할 일 추가 시 필터링 적용
         }
     }
 
@@ -100,13 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Add event listeners to color buttons
-    colorButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const selectedColor = button.dataset.color;
-            document.body.style.backgroundColor = selectedColor;
-        });
-    });
+    // Add event listener to filter dropdown
+    filterCategory.addEventListener('change', filterTasks);
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
@@ -129,5 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dateElement.textContent = today.toLocaleDateString('en-US', options);
     }
     displayCurrentDate();
-    updateCounters(); // 초기 로드 시 카운터 업데이트
+    updateCounters();
+    filterTasks(); // 초기 로드 시 필터링 적용
 });
