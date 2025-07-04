@@ -9,17 +9,23 @@
 </head>
 <body>
     <div class="container">
-        <h1>My To-Do List</h1>
-        <div class="color-palette">
-            <button class="color-btn" data-color="#f8f8f8" style="background-color: #f8f8f8;"></button>
-            <button class="color-btn" data-color="#e0f7fa" style="background-color: #e0f7fa;"></button>
-            <button class="color-btn" data-color="#e8f5e9" style="background-color: #e8f5e9;"></button>
-            <button class="color-btn" data-color="#fffde7" style="background-color: #fffde7;"></button>
-            <button class="color-btn" data-color="#fce4ec" style="background-color: #fce4ec;"></button>
-            <button class="color-btn" data-color="#eceff1" style="background-color: #eceff1;"></button>
+        <div class="top-header">
+            <div class="header-text">
+                <p class="your-things">To-Do by cos</p>
+                <p class="current-date" id="currentDate"></p>
+            </div>
+            <div class="counter-info">
+                <p id="personalCount">24 Personal</p>
+                <p id="businessCount">15 Business</p>
+                <p id="donePercentage">65% done</p>
+            </div>
         </div>
         <div class="input-area">
             <input type="text" id="taskInput" placeholder="Add a new task...">
+            <select id="taskCategory">
+                <option value="Personal">Personal</option>
+                <option value="Business">Business</option>
+            </select>
             <button id="addButton">Add</button>
         </div>
         <div class="lists-container">
@@ -29,15 +35,17 @@
                     <!-- To-Do tasks will be added here -->
                 </ul>
             </div>
-            <div class="list-section">
-                <h2>Completed</h2>
-                <ul id="completedList">
-                    <!-- Completed tasks will be moved here -->
-                </ul>
-            </div>
         </div>
     </div>
+    <div class="color-palette">
+        <button class="color-btn" data-color="#f8f8f8" style="background-color: #f8f8f8;"></button>
+        <button class="color-btn" data-color="#e0f7fa" style="background-color: #e0f7fa;"></button>
+        <button class="color-btn" data-color="#e8f5e9" style="background-color: #e8f5e9;"></button>
+        <button class="color-btn" data-color="#fffde7" style="background-color: #fffde7;"></button>
+        <button class="color-btn" data-color="#fce4ec" style="background-color: #fce4ec;"></button>
+        <button class="color-btn" data-color="#eceff1" style="background-color: #eceff1;"></button>
     </div>
-    <script src="script.js"></script>
+    <div class="fab">+</div>
+    <script src="script.js?v=1"></script>
 </body>
 </html>
