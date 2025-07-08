@@ -6,7 +6,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const personalCountElement = document.getElementById('personalCount');
     const businessCountElement = document.getElementById('businessCount');
     const donePercentageElement = document.getElementById('donePercentage');
-    const filterCategory = document.getElementById('filterCategory'); // 필터 드롭다운 추가
+    const filterCategory = document.getElementById('filterCategory');
+
+    // Function to save tasks to localStorage
+    function saveTasks() {
+        const tasks = [];
+        todoList.querySelectorAll('li').forEach(item => {
+            const taskText = item.querySelector('.task-title').textContent;
+            const category = item.dataset.category;
+            const isCompleted = item.classList.contains('completed');
+            tasks.push({ text: taskText, category: category, completed: isCompleted });
+        });
+        localStorage.setItem('todos', JSON.stringify(tasks));
+    }
 
     // Function to update task counters and done percentage
     function updateCounters() {
@@ -50,59 +62,89 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Function to create a task item (used by both addTask and loadTasks)
+    function createTaskElement(taskText, category, isCompleted) {
+        const listItem = document.createElement('li');
+        listItem.dataset.category = category;
+        if (isCompleted) {
+            listItem.classList.add('completed');
+        }
+        listItem.innerHTML = `
+            <label class="checkbox-container">
+                <input type="checkbox" ${isCompleted ? 'checked' : ''}>
+                <span class="checkmark"></span>
+            </label>
+            <div class="task-icon-wrapper">
+                <!-- Icon will go here -->
+            </div>
+            <div class="task-content">
+                <span class="task-title">${taskText}</span>
+                <span class="task-description"></span>
+            </div>
+            <div class="task-meta-actions">
+                <span class="task-category">${category}</span>
+                <span class="task-time"></span>
+                <button class="delete-btn">Delete</button>
+            </div>
+        `;
+
+        // Add to the list (completed tasks at the bottom)
+        if (isCompleted) {
+            todoList.appendChild(listItem);
+        } else {
+            todoList.prepend(listItem);
+        }
+
+        // Add event listener to the checkbox
+        const checkbox = listItem.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', () => {
+            listItem.classList.toggle('completed');
+            if (checkbox.checked) {
+                todoList.appendChild(listItem);
+            } else {
+                todoList.prepend(listItem);
+            }
+            updateCounters();
+            saveTasks(); // Save changes
+            filterTasks();
+        });
+
+        // Add event listener to the delete button
+        const deleteButton = listItem.querySelector('.delete-btn');
+        deleteButton.addEventListener('click', () => {
+            if (listItem.parentNode) {
+                listItem.parentNode.removeChild(listItem);
+            }
+            updateCounters();
+            saveTasks(); // Save changes
+            filterTasks();
+        });
+
+        return listItem;
+    }
+
     // Function to add a new task
     function addTask() {
         const taskText = taskInput.value.trim();
         const category = taskCategory.value;
 
         if (taskText !== '') {
-            const listItem = document.createElement('li');
-            listItem.dataset.category = category;
-            listItem.innerHTML = `
-                <label class="checkbox-container">
-                    <input type="checkbox">
-                    <span class="checkmark"></span>
-                </label>
-                <div class="task-icon-wrapper">
-                    <!-- Icon will go here -->
-                </div>
-                <div class="task-content">
-                    <span class="task-title">${taskText}</span>
-                    <span class="task-description"></span>
-                </div>
-                <div class="task-meta-actions">
-                    <span class="task-category">${category}</span>
-                    <span class="task-time"></span>
-                    <button class="delete-btn">Delete</button>
-                </div>
-            `;
-            todoList.appendChild(listItem);
+            createTaskElement(taskText, category, false);
             taskInput.value = '';
-
-            // Add event listener to the checkbox
-            const checkbox = listItem.querySelector('input[type="checkbox"]');
-            checkbox.addEventListener('change', () => {
-                listItem.classList.toggle('completed');
-                if (checkbox.checked) {
-                    todoList.appendChild(listItem);
-                } else {
-                    todoList.prepend(listItem);
-                }
-                updateCounters();
-                filterTasks(); // 필터링된 상태 유지
-            });
-
-            // Add event listener to the delete button
-            const deleteButton = listItem.querySelector('.delete-btn');
-            deleteButton.addEventListener('click', () => {
-                if (listItem.parentNode) {
-                    listItem.parentNode.removeChild(listItem);
-                }
-                updateCounters();
-                filterTasks(); // 필터링된 상태 유지
-            });
             updateCounters();
-            filterTasks(); // 새 할 일 추가 시 필터링 적용
+            saveTasks(); // Save the new task
+            filterTasks();
+        }
+    }
+
+    // Function to load tasks from localStorage
+    function loadTasks() {
+        const savedTasks = localStorage.getItem('todos');
+        if (savedTasks) {
+            const tasks = JSON.parse(savedTasks);
+            tasks.forEach(task => {
+                createTaskElement(task.text, task.category, task.completed);
+            });
         }
     }
 
@@ -139,7 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date();
         dateElement.textContent = today.toLocaleDateString('en-US', options);
     }
+
+    // Initial setup
     displayCurrentDate();
+    loadTasks(); // Load tasks from localStorage
     updateCounters();
-    filterTasks(); // 초기 로드 시 필터링 적용
+    filterTasks();
 });
