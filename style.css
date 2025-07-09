@@ -300,3 +300,11 @@ li.completed .task-title {
         flex-direction: column;
     }
 }
+
+/* Styles for animated todo items */
+.animated-todo-item {
+    transition: all 1s ease-in-out; /* General transition for position, opacity, transform */
+    position: fixed; /* Ensure it's positioned relative to the viewport */
+    z-index: 1000; /* Ensure it's on top of other elements during animation */
+    /* Initial left, top, opacity, transform will be set by JavaScript */
+}

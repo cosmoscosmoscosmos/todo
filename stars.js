@@ -1,3 +1,4 @@
+
 const canvas = document.getElementById('starfield');
 const ctx = canvas.getContext('2d');
 
@@ -13,15 +14,27 @@ resizeCanvas();
 const celestialObjects = [
     {
         type: 'blackHole',
-        x: canvas.width * 0.2,
-        y: canvas.height * 0.2,
+        x: canvas.width * 0.85,
+        y: canvas.height * 0.55,
         radius: 50, // Event horizon radius
-        glowRadius: 100, // Radius for the red glow
+        diskInnerRadius: 55, // Inner radius of the red donut (increased)
+        diskOuterRadius: 80, // Outer radius of the red donut (reduced)
         speedX: 0.005,
         speedY: 0.005,
         rotation: 0,
-        rotationSpeed: 0.01, // Rotation for the red glow
+        rotationSpeed: 0.015, // Rotation speed for the donut
         distortionRadius: 200 // Radius for gravitational lensing effect
+    },
+    {
+        type: 'whiteHole',
+        x: canvas.width * 0.175,
+        y: canvas.height * 0.55,
+        radius: 40,
+        glowRadius: 70,
+        speedX: -0.003,
+        speedY: 0.003,
+        rotation: 0,
+        rotationSpeed: -0.01 // Counter-rotation for visual effect
     },
     {
         type: 'waningCrescentMoon',
@@ -63,19 +76,22 @@ function drawBlackHole(obj) {
     ctx.save();
     ctx.translate(obj.x, obj.y);
 
-    // Red Glow/Border (simulating light being pulled in)
-    ctx.rotate(obj.rotation); // Apply rotation to the glow
-    const redGlowGradient = ctx.createRadialGradient(0, 0, obj.radius, 0, 0, obj.glowRadius);
-    redGlowGradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)'); // Bright red near core
-    redGlowGradient.addColorStop(0.5, 'rgba(255, 0, 0, 0.4)'); // Fading red
-    redGlowGradient.addColorStop(1, 'rgba(255, 0, 0, 0)'); // Transparent
+    // Red Accretion Disk (Donut shape, fiery glow)
+    ctx.rotate(obj.rotation); // Apply rotation to the disk
 
-    ctx.fillStyle = redGlowGradient;
+    const diskGradient = ctx.createRadialGradient(0, 0, obj.diskInnerRadius, 0, 0, obj.diskOuterRadius);
+    diskGradient.addColorStop(0, 'rgba(255, 0, 0, 0.9)'); // Bright red at inner edge
+    diskGradient.addColorStop(0.5, 'rgba(255, 69, 0, 0.7)'); // Orange-red in middle
+    diskGradient.addColorStop(1, 'rgba(255, 140, 0, 0.3)'); // Darker orange at outer edge
+
+    ctx.fillStyle = diskGradient;
     ctx.beginPath();
-    ctx.arc(0, 0, obj.glowRadius, 0, Math.PI * 2);
-    ctx.shadowColor = 'rgba(255, 0, 0, 0.7)'; // Red shadow for glow
-    ctx.shadowBlur = 40;
+    ctx.arc(0, 0, obj.diskOuterRadius, 0, Math.PI * 2); // Outer circle
+    ctx.arc(0, 0, obj.diskInnerRadius, 0, Math.PI * 2, true); // Inner circle (cut out)
+    ctx.shadowColor = 'rgba(255, 0, 0, 0.8)'; // Strong red shadow
+    ctx.shadowBlur = 50; // Intense glow
     ctx.fill();
+
     ctx.rotate(-obj.rotation); // Rotate back for the core
 
     // Event Horizon (the black core)
@@ -84,6 +100,36 @@ function drawBlackHole(obj) {
     ctx.arc(0, 0, obj.radius, 0, Math.PI * 2);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'; // Dark shadow for depth
     ctx.shadowBlur = 50;
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawWhiteHole(obj) {
+    ctx.save();
+    ctx.translate(obj.x, obj.y);
+    ctx.rotate(obj.rotation);
+
+    // Inner bright core
+    const coreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, obj.radius);
+    coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // Bright white
+    coreGradient.addColorStop(0.5, 'rgba(255, 255, 200, 0.8)'); // Slightly off-white
+    coreGradient.addColorStop(1, 'rgba(255, 255, 150, 0.5)'); // Yellowish white
+    ctx.fillStyle = coreGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, obj.radius, 0, Math.PI * 2);
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+    ctx.shadowBlur = 30;
+    ctx.fill();
+
+    // Outward glow/aura
+    const glowGradient = ctx.createRadialGradient(0, 0, obj.radius, 0, 0, obj.glowRadius);
+    glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+    glowGradient.addColorStop(0.5, 'rgba(255, 255, 200, 0.2)');
+    glowGradient.addColorStop(1, 'rgba(255, 255, 150, 0)');
+    ctx.fillStyle = glowGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, obj.glowRadius, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -190,6 +236,7 @@ function updateAndDrawCelestialObjects() {
         if (obj.y - objWidth > canvas.height + 200) obj.y = -objWidth;
 
         if (obj.type === 'blackHole') drawBlackHole(obj);
+        else if (obj.type === 'whiteHole') drawWhiteHole(obj); // Added white hole drawing
         else if (obj.type === 'waningCrescentMoon') drawWaningCrescentMoon(obj);
         else if (obj.type === 'saturn') drawSaturn(obj);
         else if (obj.type === 'redPlanet') drawRedPlanet(obj);
@@ -299,3 +346,6 @@ function draw() {
 
 setInterval(createShootingStar, Math.random() * 2000 + 1000);
 draw();
+
+// Expose celestialObjects to the global window object
+window.celestialObjects = celestialObjects;

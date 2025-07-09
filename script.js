@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Helper to get celestial object positions
+    function getCelestialObjectPosition(type) {
+        const canvas = document.getElementById('starfield');
+        // Ensure celestialObjects is accessible globally from stars.js
+        if (!canvas || typeof window.celestialObjects === 'undefined') return null;
+
+        const obj = window.celestialObjects.find(o => o.type === type);
+        if (!obj) return null;
+
+        // Get canvas position on screen
+        const canvasRect = canvas.getBoundingClientRect();
+
+        // Return current position relative to viewport
+        return {
+            x: canvasRect.left + obj.x,
+            y: canvasRect.top + obj.y
+        };
+    }
+
     const taskInput = document.getElementById('taskInput');
     const addButton = document.getElementById('addButton');
     const todoList = document.getElementById('todoList');
@@ -98,15 +117,58 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add event listener to the checkbox
         const checkbox = listItem.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', () => {
-            listItem.classList.toggle('completed');
             if (checkbox.checked) {
-                todoList.appendChild(listItem);
+                // Apply completed class immediately
+                listItem.classList.add('completed');
+                todoList.appendChild(listItem); // Move to bottom of list
+
+                // Black Hole animation for completion
+                const blackHolePos = getCelestialObjectPosition('blackHole');
+                if (blackHolePos) {
+                    const listItemRect = listItem.getBoundingClientRect();
+                    const tempItem = listItem.cloneNode(true);
+                    tempItem.style.position = 'fixed';
+                    tempItem.style.left = listItemRect.left + 'px';
+                    tempItem.style.top = listItemRect.top + 'px';
+                    tempItem.style.width = listItemRect.width + 'px';
+                    tempItem.style.height = listItemRect.height + 'px';
+                    tempItem.style.zIndex = '1000';
+                    tempItem.style.transition = 'all 1s ease-in-out';
+                    tempItem.style.opacity = '1';
+                    tempItem.style.transform = 'scale(1)';
+                    document.body.appendChild(tempItem);
+
+                    // Animate to black hole
+                    setTimeout(() => {
+                        tempItem.style.left = blackHolePos.x + 'px';
+                        tempItem.style.top = blackHolePos.y + 'px';
+                        tempItem.style.opacity = '0';
+                        tempItem.style.transform = 'scale(0.1)';
+                    }, 10); // Small delay to ensure transition applies
+
+                    setTimeout(() => {
+                        if (tempItem.parentNode) {
+                            tempItem.parentNode.removeChild(tempItem);
+                        }
+                        // Original item remains in list, just update counts and save
+                        updateCounters();
+                        saveTasks();
+                        filterTasks();
+                    }, 1000); // Match transition duration
+                } else {
+                    // Fallback if black hole position not found
+                    updateCounters();
+                    saveTasks();
+                    filterTasks();
+                }
             } else {
-                todoList.prepend(listItem);
+                // Revert completion
+                listItem.classList.remove('completed');
+                todoList.prepend(listItem); // Move to top of list
+                updateCounters();
+                saveTasks();
+                filterTasks();
             }
-            updateCounters();
-            saveTasks(); // Save changes
-            filterTasks();
         });
 
         // Add event listener to the delete button
@@ -123,17 +185,79 @@ document.addEventListener('DOMContentLoaded', () => {
         return listItem;
     }
 
-    // Function to add a new task
+    // Function to add a new task with White Hole animation
     function addTask() {
         const taskText = taskInput.value.trim();
         const category = taskCategory.value;
 
         if (taskText !== '') {
-            createTaskElement(taskText, category, false);
-            taskInput.value = '';
-            updateCounters();
-            saveTasks(); // Save the new task
-            filterTasks();
+            const whiteHolePos = getCelestialObjectPosition('whiteHole');
+            if (whiteHolePos) {
+                // Create a temporary element for animation
+                const tempItem = document.createElement('li');
+                tempItem.dataset.category = category;
+                tempItem.innerHTML = `
+                    <label class="checkbox-container">
+                        <input type="checkbox">
+                        <span class="checkmark"></span>
+                    </label>
+                    <div class="task-icon-wrapper"></div>
+                    <div class="task-content">
+                        <span class="task-title">${taskText}</span>
+                        <span class="task-description"></span>
+                    </div>
+                    <div class="task-meta-actions">
+                        <span class="task-category">${category}</span>
+                        <span class="task-time"></span>
+                        <button class="delete-btn">Delete</button>
+                    </div>
+                `;
+                tempItem.style.position = 'fixed';
+                tempItem.style.left = whiteHolePos.x + 'px';
+                tempItem.style.top = whiteHolePos.y + 'px';
+                tempItem.style.opacity = '0';
+                tempItem.style.transform = 'scale(0.1)';
+                tempItem.style.zIndex = '1000';
+                tempItem.style.transition = 'all 1s ease-out'; // Smooth transition
+
+                document.body.appendChild(tempItem);
+
+                // Force reflow to ensure initial styles are applied before transition
+                tempItem.offsetHeight;
+
+                // Animate to target position
+                setTimeout(() => {
+                    // Temporarily add to DOM to get target position
+                    const dummyItem = createTaskElement(taskText, category, false);
+                    todoList.prepend(dummyItem);
+                    const targetRect = dummyItem.getBoundingClientRect();
+                    todoList.removeChild(dummyItem); // Remove dummy
+
+                    tempItem.style.left = targetRect.left + 'px';
+                    tempItem.style.top = targetRect.top + 'px';
+                    tempItem.style.opacity = '1';
+                    tempItem.style.transform = 'scale(1)';
+                }, 10); // Small delay to ensure transition applies
+
+                // After animation, add the actual task
+                setTimeout(() => {
+                    if (tempItem.parentNode) {
+                        tempItem.parentNode.removeChild(tempItem);
+                    }
+                    createTaskElement(taskText, category, false);
+                    taskInput.value = '';
+                    updateCounters();
+                    saveTasks();
+                    filterTasks();
+                }, 1000); // Match transition duration
+            } else {
+                // Fallback if white hole position not found
+                createTaskElement(taskText, category, false);
+                taskInput.value = '';
+                updateCounters();
+                saveTasks();
+                filterTasks();
+            }
         }
     }
 
